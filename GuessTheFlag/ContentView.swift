@@ -37,10 +37,22 @@ struct ContentView: View {
     @State private var showingFinalAlert = false
     @State private var scoreTitle = ""
     @State private var correctAnswer = Int.random(in: 0...2)
-    @State private var countries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Poland", "Russia", "Spain", "UK", "US"].shuffled()
     @State private var score = 0
     @State private var messageToShowInAlert = ""
     @State private var times = 0
+    @State private var countries = [
+        (name: "Estonia", tapped: false, opaque: false),
+        (name: "France", tapped: false, opaque: false),
+        (name: "Germany", tapped: false, opaque: false),
+        (name: "Ireland", tapped: false, opaque: false),
+        (name: "Italy", tapped: false, opaque: false),
+        (name: "Nigeria", tapped: false, opaque: false),
+        (name: "Poland", tapped: false, opaque: false),
+        (name: "Russia", tapped: false, opaque: false),
+        (name: "Spain", tapped: false, opaque: false),
+        (name: "UK", tapped: false, opaque: false),
+        (name: "US", tapped: false, opaque: false),
+    ]
 
     var body: some View {
         ZStack {
@@ -62,7 +74,7 @@ struct ContentView: View {
                         Text("Tap the flag of")
                             .foregroundStyle(.secondary)
                             .font(.subheadline.weight(.heavy))
-                        Text(countries[correctAnswer])
+                        Text(countries[correctAnswer].name)
                         
                             .font(.largeTitle.weight(.semibold))
                     }
@@ -71,8 +83,12 @@ struct ContentView: View {
                         Button {
                             flagTapped(number)
                         } label: {
-                            FlagImage(countrie: countries[number])
+                            FlagImage(countrie: countries[number].name)
                         }
+                        .opacity(countries[number].opaque ? 0.25: 1)
+                        .scaleEffect(countries[number].opaque ? 0.5 : 1)
+                        .animation(.default, value: countries[number].opaque)
+                        .rotation3DEffect(Angle(degrees: countries[number].tapped ? 360 : 0), axis: (0, 1, 0))
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -85,8 +101,6 @@ struct ContentView: View {
                 
                 Text("Score: \(score)")
                     .whiteFontWithBoldTitle()
-//                    .foregroundColor(.white)
-//                    .font(.title.bold())
                 
                 Spacer()
             }
@@ -110,9 +124,21 @@ struct ContentView: View {
             scoreTitle = "Correct"
             score += 1
         } else {
-            messageToShowInAlert = "That's the flag of \(countries[correctAnswer])."
+            messageToShowInAlert = "That's the flag of \(countries[correctAnswer].name)."
             scoreTitle = "Wrong"
             score -= 1
+        }
+        
+        withAnimation {
+            // Toggle tapped property to true
+            countries[number].tapped.toggle()
+
+            // Change the opacity of the other two buttons
+            for i in 0..<3 {
+                if i != number {
+                    countries[i].opaque = true
+                }
+            }
         }
         
         messageToShowInAlert += "\nYour score is \(score)"
@@ -129,7 +155,15 @@ struct ContentView: View {
     
     private func askQuestion() {
         countries.shuffle()
+        restoreFlagsProperties()
         correctAnswer = Int.random(in: 0...2)
+    }
+    
+    private func restoreFlagsProperties() {
+        for i in 0..<countries.count {
+            countries[i].tapped = false
+            countries[i].opaque = false
+        }
     }
     
     private func resetGame() {
